@@ -1,27 +1,28 @@
 import gzip
 
 class PageRank:
-    def __init__(self, lb, tau, filename):
+    def __init__(self, lb, tau, filename = None):
         self.lb = lb
         self.tau = tau
         self.pages = set()
         self.inlinks = dict()
         self.outlinks = dict()
-        f = gzip.open(filename, "rb")
-        while True:
-            line = f.readline()
-            if line == b'':
-                break
-            link = str(line, "utf-8")
-            src, des = link.split()
-            self.pages.add(src)
-            self.pages.add(des)
-            if src not in self.outlinks:
-                self.outlinks[src] = set()
-            if des not in self.inlinks:
-                self.inlinks[des] = set()
-            self.outlinks[src].add(des)
-            self.inlinks[des].add(src)
+        if filename is not None:
+            with gzip.open(filename, "rb") as f:
+                while True:
+                    line = f.readline()
+                    if line == b'':
+                        break
+                    link = str(line, "utf-8")
+                    src, des = link.split()
+                    self.pages.add(src)
+                    self.pages.add(des)
+                    if src not in self.outlinks:
+                        self.outlinks[src] = set()
+                    if des not in self.inlinks:
+                        self.inlinks[des] = set()
+                    self.outlinks[src].add(des)
+                    self.inlinks[des].add(src)
 
     def readInput(self, inp):
         self.pages = set()
