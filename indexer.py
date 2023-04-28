@@ -1,5 +1,6 @@
 import json, gzip, time
 
+
 class Posting(object):
     def __init__(self, playId, sceneId, wordPos = None):
         self.playId = playId
@@ -19,19 +20,38 @@ class PostingList(object):
     def getPostingList(self):
         return self.postings
 
+def find_indices(lst, condition):
+    return [i for i, elem in enumerate(lst) if condition(elem)]
 
 class Indexer(object):
-    def __init__(self, inputFile, outputFolder, queriesFile):
-        with gzip.open(inputFile, 'r') as f:
-            self.data = json.loads(f.read().decode('utf-8'))
-        
-        self.outputFolder = outputFolder
-        self.queriesFile = queriesFile
+    def __init__(self, input_file):
+        self.input_file = input_file
+        self.data = dict()
+        self.outputFolder = ""
+        self.queriesFile = ""
         self.invertedList = dict()
         self.sceneList = dict()
         self.playList = dict()
 
         self.createInvertedList()
+
+    def load_data(self):
+        self.data["corpus"] = list()
+        with open(self.input_file, 'r') as f:
+            for l in f:
+                line = json.load(l.strip())
+                play_name = line["play_name"]
+                act_id, scene_num, line_number = line["line_number"].split(".")
+                scene_id = play_name + ":" + act_id + "." + scene_num
+                if len(find_indices(self.data["corpus"], lambda x : x["sceneId"] == scene_id)) == 0:
+                    scene = dict()
+                    scene["playId"] = line["play_name"]
+                    scene["sceneId"] = scene_id
+
+
+
+
+
 
     def createInvertedList(self):
         for idx, s in enumerate(self.data["corpus"]):

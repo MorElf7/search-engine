@@ -167,12 +167,12 @@ class Tokenizer(object):
         return stem
 
     # The whole tokenization system, in order, tokenization, stopping, stemming
-    def textProcessing(self, document : str) -> List[str]:
+    def textProcessing(self, document : str) :
         result = self.tokenization(document)
         self.stopping(result)
         for i in range(len(result)):
             result[i] = self.stemming(result[i])
-        return result
+        return " ".join(result)
 
     # Helper function to return the list of k most frequent terms
     def frequentTerms(terms : List[str], k) -> List[str]:
