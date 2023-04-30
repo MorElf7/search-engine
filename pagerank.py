@@ -1,35 +1,18 @@
-import gzip
+import sys, gzip, datetime
+import utils
 
 class PageRank:
-    def __init__(self, lb, tau, filename = None):
+    def __init__(self, lb, tau, filename):
         self.lb = lb
         self.tau = tau
         self.pages = set()
         self.inlinks = dict()
         self.outlinks = dict()
-        if filename is not None:
-            with gzip.open(filename, "rb") as f:
-                while True:
-                    line = f.readline()
-                    if line == b'':
-                        break
-                    link = str(line, "utf-8")
-                    src, des = link.split()
-                    self.pages.add(src)
-                    self.pages.add(des)
-                    if src not in self.outlinks:
-                        self.outlinks[src] = set()
-                    if des not in self.inlinks:
-                        self.inlinks[des] = set()
-                    self.outlinks[src].add(des)
-                    self.inlinks[des].add(src)
-
-    def readInput(self, inp):
-        self.pages = set()
-        self.inlinks = dict()
-        self.outlinks = dict()
-        lines = inp.split("\n")
-        for line in lines:
+        f = gzip.open(filename, "rb")
+        while True:
+            line = f.readline()
+            if line == b'':
+                break
             link = str(line, "utf-8")
             src, des = link.split()
             self.pages.add(src)
@@ -87,3 +70,36 @@ class PageRank:
         
             if check:
                 return dict(sorted(resultPR.items(), key = lambda x: x[1], reverse = True))
+
+def writeOutput(out, filename, k):
+    f = open(filename, "w")
+    index = 1
+    for page, rank in out.items():
+        f.write(str(page) + "\t" + str(index) + "\t" + str(rank) + "\n")
+        if index == k: 
+            break
+        index += 1
+
+    f.close()
+    return None
+
+if __name__ == "__main__":
+    argv_len = len(sys.argv)
+    inputFile = sys.argv[1] if argv_len >= 2 else "links.srt.gz"
+    lambda_val = float(sys.argv[2]) if argv_len >=3 else 0.2
+    tau = float(sys.argv[3]) if argv_len >=4 else 0.005
+    inLinksFile = sys.argv[4] if argv_len >= 5 else "inlinks.txt"
+    pagerankFile = sys.argv[5] if argv_len >= 6 else "pagerank.txt"
+    k = int(sys.argv[6]) if argv_len >= 7 else 100
+
+    start_time = datetime.datetime.now()
+    pr = PageRank(lambda_val, tau, inputFile)
+    print("Finish processing input: " + utils.get_elapsed_time(start_time, datetime.datetime.now()))
+    start_time = datetime.datetime.now()
+    writeOutput(pr.countInlinks(), inLinksFile, k)
+    print("Finish counting links: " + utils.get_elapsed_time(start_time, datetime.datetime.now()))
+    start_time = datetime.datetime.now()
+    writeOutput(pr.getPageRank(), pagerankFile, k)
+    print("Finish PageRank: " + utils.get_elapsed_time(start_time, datetime.datetime.now()))
+    exit(1)
+    

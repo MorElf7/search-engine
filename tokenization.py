@@ -100,11 +100,11 @@ class Tokenizer(object):
                 temp = list(filter(None, re.split("[^a-zA-Z0-9]+", wordList[i])))
                 wordList.pop(i)
                 wordList[i:i] = temp
-                if len(temp) == 0:
+                if len(temp) == 0 and i < len(wordList):
                     wordList[i] = wordList[i].lower()
                     continue
-
-            wordList[i] = wordList[i].lower()
+            if i < len(wordList):
+                wordList[i] = wordList[i].lower()
             i += 1
         return wordList
 
@@ -167,9 +167,10 @@ class Tokenizer(object):
         return stem
 
     # The whole tokenization system, in order, tokenization, stopping, stemming
-    def textProcessing(self, document : str) :
+    def tokenize(self, document : str) :
         result = self.tokenization(document)
-        self.stopping(result)
+        #You can remove the stopwords here, but I am keeping it in to have better results when querying 
+        # self.stopping(result) 
         for i in range(len(result)):
             result[i] = self.stemming(result[i])
         return " ".join(result)
