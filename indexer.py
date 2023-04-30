@@ -1,90 +1,139 @@
-import json, gzip, time
+import json, gzip, datetime, os
+from tokenization import Tokenizer
+import utils
 
 class Posting(object):
-    def __init__(self, playId, sceneId, wordPos = None):
-        self.playId = playId
-        self.sceneId = sceneId
-        self.positions = list(wordPos)
+    def __init__(self, play_id, scene_id, word_pos = None):
+        self.play_id = play_id
+        self.scene_id = scene_id
+        self.positions = list(word_pos)
+        self.count = len(self.positions)
 
 class PostingList(object):
     def __init__(self):
         self.postings = dict()
 
-    def insert(self, playId, sceneId, wordPos):
-        if sceneId not in self.postings:
-            self.postings[sceneId] = Posting(playId, sceneId, [wordPos])
-        else:
-            self.postings[sceneId].positions.append(wordPos)
-
-    def getPostingList(self):
-        return self.postings
-
+def insert_posting(posting_list, play_id, scene_id, word_pos):
+    if scene_id not in posting_list:
+        posting_list[scene_id] = Posting(play_id, scene_id, [word_pos])
+    else:
+        posting_list[scene_id]["positions"].append(word_pos)
+        posting_list[scene_id]["count"] += 1
 
 class Indexer(object):
-    def __init__(self, inputFile, outputFolder, queriesFile):
-        with gzip.open(inputFile, 'r') as f:
-            self.data = json.loads(f.read().decode('utf-8'))
-        
-        self.outputFolder = outputFolder
-        self.queriesFile = queriesFile
-        self.invertedList = dict()
-        self.sceneList = dict()
-        self.playList = dict()
-
-        self.createInvertedList()
-
-    def createInvertedList(self):
-        for idx, s in enumerate(self.data["corpus"]):
-            tokens = s["text"].split()
-
-            if s["sceneId"] not in self.sceneList:
-                self.sceneList[s["sceneId"]] = 0
-            if s["playId"] not in self.playList:
-                self.playList[s["playId"]] = 0
+    def __init__(self, raw_data_file=None, database=None):
+        self.data = list()
+        if raw_data_file is not None and os.path.exists(raw_data_file):
+            with open(raw_data_file, 'r') as f:
+                for l in f:
+                    line = json.loads(l.strip())
+                    self.data.append(line)
             
-            self.sceneList[s["sceneId"]] += len(tokens)
-            self.playList[s["playId"]] += len(tokens)
+            self.inverted_list = dict()
+            self.scene_list = dict()
+            self.play_list = dict()
+            self.collection_len = 0
+            self.create_IL()
+            
+        elif database is not None and os.path.exists(database):
+            with gzip.open(database, "r") as f:
+                save_data = json.loads(f.read().decode('utf-8'))
+                self.inverted_list = save_data["inverted_list"]
+                self.scene_list = save_data["scene_list"]
+                self.collection_len = save_data["collection_len"]
+                self.play_list = save_data["play_list"]
+
+
+    def create_IL(self, save=True):
+        start_time = datetime.datetime.now()
+        tokenizer = Tokenizer()
+        prev_scene = ""
+        print("Start constructing the inverted list")
+        for line in self.data:
+            tokens = tokenizer.tokenize(line["text_entry"]).split()
+            self.collection_len += len(tokens)
+            play_name = line["play_name"]
+            if len(line["line_number"]) != 0:
+                act_id, scene_num, line_number = line["line_number"].split(".")
+                scene_id = play_name + ":" + act_id + "." + scene_num
+                if scene_id != prev_scene:
+                    prev_scene = scene_id
+            else:
+                scene_id = prev_scene
+            
+            if scene_id not in self.scene_list:
+                self.scene_list[scene_id] = 0
+            if play_name not in self.play_list:
+                self.play_list[play_name] = 0
+            
+            self.scene_list[scene_id] += len(tokens)
+            self.play_list[play_name] += len(tokens)
 
             for i, token in enumerate(tokens):
-                if token not in self.invertedList:
-                    self.invertedList[token] = PostingList()
-                self.invertedList[token].insert(s["playId"], s["sceneId"], i)
-                
-    def getAvgSceneLen(self):
-        count = 0
-        for k, v in self.sceneList.items():
-            count += v
-        return count / len(self.sceneList)
+                if token not in self.inverted_list:
+                    self.inverted_list[token] = dict()
+                insert_posting(self.inverted_list[token], play_name, scene_id, i)
+        
+        if save:
+            with gzip.open("database.json.gz", "wb") as f:
+                save_data = dict()
+                save_data["inverted_list"] = self.inverted_list
+                save_data["scene_list"] = self.scene_list
+                save_data["play_list"] = self.play_list
+                save_data["collection_len"] = self.collection_len
+                f.write(json.dumps(save_data, default=lambda x: x.__dict__).encode("utf-8"))
 
-    def getMinLenScene(self):
-        return min(self.sceneList, key = self.sceneList.get)
+        print("Finish constructing the inverted list")
+        print("Time elapsed: {}".format(utils.get_elapsed_time(start_time, datetime.datetime.now())))
 
-    def getMaxLenScene(self):
-        return max(self.sceneList, key = self.sceneList.get)
+    def get_TF_collection(self, term):
+        posting_list = self.inverted_list[term]
+        cnt = 0
+        for scene, posting in posting_list.items():
+            cnt += posting["count"]
+        return cnt
+    
+    def get_TF_scene(self, term, scene):
+        posting_list = self.inverted_list[term]
+        return 0 if scene not in posting_list else posting_list[scene]["count"]
 
-    def getMinPlayScene(self):
-        return min(self.playList, key = self.playList.get)
+    def get_scene_len(self, scene):
+        return self.scene_list[scene]
 
-    def getMaxPlayScene(self):
-        return max(self.playList, key = self.playList.get)
+    def get_avg_scene_len(self):
+        return float(self.collection_len / len(self.scene_list))
 
-    def getScenceContainsPhrase(self, phrase):
+    def get_TF_play(self, term, play):
+        posting_list = self.inverted_list[term]
+        cnt = 0
+        for scene, posting in posting_list.items():
+            if play == posting.play_id:
+                cnt += posting["count"]
+        return cnt 
+
+    def get_play_len(self, play):
+        return self.play_list[play]
+
+    def get_avg_play_len(self):
+        return float(self.collection_len / len(self.play_list))           
+
+    def get_scene_contain_phrase(self, phrase):
         words = phrase.split()        
-        res = list(self.invertedList[words[0]].getPostingList().keys())
+        res = list(self.inverted_list[words[0]].keys())
 
         if len(res) == 0:
             return res
 
         for i in range(1, len(words), 1):
-            curWord = words[i]
-            prevWord = words[i - 1]
-            postings = self.invertedList[curWord].getPostingList()
-            prevWordPostings = self.invertedList[prevWord].getPostingList()
+            cur_word = words[i]
+            prev_word = words[i - 1]
+            postings = self.inverted_list[cur_word]
+            prev_word_postings = self.inverted_list[prev_word]
             temp = []
             for scene in res:
                 if scene in postings:
                     check = 0
-                    for prev in prevWordPostings[scene].positions:
+                    for prev in prev_word_postings[scene].positions:
                         if (prev + 1) in postings[scene].positions:
                             check += 1
                             break
@@ -96,89 +145,4 @@ class Indexer(object):
             
         return res
 
-    def processAndQuery(self, phrases, isScene):
-        if isScene:
-            res = self.getScenceContainsPhrase(phrases[0].strip())
-            for i in range(1, len(phrases)):
-                if len(res) == 0:
-                    return res
-
-                temp = self.getScenceContainsPhrase(phrases[i].strip())
-                res = list(set(res) & set(temp)) # Get intersection of 2 list
-
-            return set(res)
-        else:
-            res = self.extractPlayListFromSceneList(self.getScenceContainsPhrase(phrases[0].strip()))
-
-            for i in range(1, len(phrases)):
-                if len(res) == 0:
-                    return res
-
-                temp = self.extractPlayListFromSceneList(self.getScenceContainsPhrase(phrases[i].strip()))
-                res = list(set(res) & set(temp)) # Get intersection of 2 list
-
-            return set(res)
-
-    def processOrQuery(self, phrases, isScene):
-        if isScene:
-            res = set(self.getScenceContainsPhrase(phrases[0].strip()))
-            for i in range(1, len(phrases)):
-                if len(res) == 0:
-                    return res
-
-                temp = self.getScenceContainsPhrase(phrases[i].strip())
-                res = set(list(res) + list(temp)) # Get intersection of 2 list
-
-            return set(res)
-        else:
-            res = set(self.extractPlayListFromSceneList(self.getScenceContainsPhrase(phrases[0].strip())))
-
-            for i in range(1, len(phrases)):
-                if len(res) == 0:
-                    return res
-
-                temp = self.extractPlayListFromSceneList(self.getScenceContainsPhrase(phrases[i].strip()))
-                res = set(list(res) + list(temp)) # Get intersection of 2 list
-
-            return set(res)
-
-    def extractPlayListFromSceneList(self, scenes):
-        res = []
-
-        for scene in scenes:
-            res.append(scene.split(":")[0])
-
-        return res
-
-    def processQuery(self, query):
-        queryName = query[0]
-        isScene = query[1] == 'scene'
-        if query[2].lower() == "and":
-            results = list(self.processAndQuery(query[3:], isScene))
-        elif query[2].lower() == "or":
-            results = list(self.processOrQuery(query[3:], isScene))
-
-        results.sort()
-
-        with open(self.outputFolder + queryName + ".txt", "w") as f:
-            for res in results:
-                f.write(res + "\n")
-
-        return
-
-    def startQuery(self):
-        with open(self.queriesFile, 'r') as f:
-            maxTime = 0
-            maxQuery = ""
-            for line in f:
-                l = line.split("\t")
-                print("Start query " + l[0] + ": ")
-                startTime = time.time()
-                self.processQuery(l)
-                endTime = time.time() - startTime
-                if endTime > maxTime:
-                    maxQuery = l[0]
-                    maxTime = endTime
-                print("Finish query: " + str(endTime))
-            # print("Longest query: ", maxQuery)
-        return 
+    
