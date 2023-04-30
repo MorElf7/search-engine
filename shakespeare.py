@@ -41,16 +41,18 @@ if __name__ == '__main__':
         elif mode == "ql":
             res = engine.ql(idx, query, True)
         
-        with open("self.outputFile", "a") as f:
+        with open(output_file, "a") as f:
             index = 1
+            f.write("Query: {} \n".format(query))
             for key, value in res.items():
                 play, act, scene = re.split("[:.]", key)
                 if index <= 10:
                     print("Rank {}: {} Act {} Scene {}".format(index, play, act, scene))
-                f.write(str(key) + " ")
-                f.write(str(index) + " ")
-                f.write(str("{0:.6f}".format(value)) + " ")
+                f.write(str(key) + "\t")
+                f.write(str(index) + "\t")
+                f.write(str("{0:.6f}".format(value)) + "\t")
                 f.write("\n")
                 index += 1
                 if index > 100:
                     break
+            f.write("\n")
