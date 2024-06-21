@@ -6,7 +6,7 @@ from flask_swagger_ui import get_swaggerui_blueprint
 from engine import Indexer, Query, QueryParser, connect_db
 from utils import data_response, error_response
 
-app = Flask(__name__)
+application = Flask(__name__)
 
 idx = Indexer()
 query_engine = Query()
@@ -19,12 +19,12 @@ if not os.path.exists("shakespeares.db"):
 con = connect_db()
 
 
-@app.route("/", methods=["GET"])
+@application.route("/", methods=["GET"])
 def home():
     return render_template("index.html")
 
 
-@app.route("/search", methods=["GET"])
+@application.route("/search", methods=["GET"])
 def search():
     raw_query = request.args.get("query", "")
     if raw_query == "":
@@ -43,4 +43,7 @@ API_URL = "/static/swagger.yaml"
 swagger_ui_blueprint = get_swaggerui_blueprint(
     SWAGGER_URL, API_URL, config={"app_name": "Shakespeares Search Engine"}
 )
-app.register_blueprint(swagger_ui_blueprint, url_prefix=SWAGGER_URL)
+application.register_blueprint(swagger_ui_blueprint, url_prefix=SWAGGER_URL)
+
+if __name__ == "__main__":
+    application.run()
