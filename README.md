@@ -1,36 +1,33 @@
-# Shakespeare Scenes search engine
+# Shakespeare Search Engine
 
-Hello, this is my implementation of a search engine for Shakespeare plays. Processes like tokenization, indexing, and querying are my own implementation.
+Hello, this is my implementation of a search engine for Shakespeare plays. All components are built from scratch.
+It has both an API as well as a minimal webpage to demonstrate its capabilities
 
-In this implementation, I regard scenes of each plays as the document, and the inverted list is constructed using data from `shakespeare-data` file. There are 2 models of information retrieval available: BM25 and QL(Query Likelihood). You can choose either for your search.
+## How it works
 
-Running on Python 3.10. Make sure that you have `shakespeare-data` file in the same directory as `shakespeare.py`. To run, execute the following command
+First, using the data from the file `shakespeare-data`, each is parsed and process to construct an Inverted List stored using SQLite. All calculations would be used along with this database.
 
-```bash
-python shakespeare.py [mode] [output_file]
-```
+### What happens when a query is passed in
+First the query is parsed and tokenized. Then running the preprocessed query through a Boolean filter, we got a list of filtered documents. From that list of filtered documents, we use [BM25](https://en.wikipedia.org/wiki/Okapi_BM25#:~:text=5%20General%20references-,The%20ranking%20function,slightly%20different%20components%20and%20parameters.)
+algorithm to score and rank each document. In this cases, each scene of each play and act is considered a document. The results are a sorted list of scenes based on the calculated score. 
 
-The default mode is BM25
+## Features
 
-```bash
-python shakespeare.py bm25
-```
+- Parse and tokenize the query using AST and PorterStemmer
+- Boolean filter supports `AND`, `OR`, and `NOT`
+- Should respects parentheses order and priority, does not support nested parentheses yet
+- Exact phrasing with double quotes, eg. "something here" is considered one word
+- The database consists of around 800 unique scenes and 900,000 individual words
 
-but you can run the following command to query with QL
 
-```bash
-python shakespeare.py ql
-```
+## Extras
 
-When querying, the program would return the top 10 results as well as saving the top 100 results to a file of your choosing. Default output file is `queries.result`. It is in the format
+### Plan for the future
 
-```bash
-key     rank    score
-```
+- Implement an evaluation system to get data to better improve the search algorithm
+- Expands to other databases, optimize the way data is stored and retrieved for better performance
 
-The key is `[play name]:[act].[scene]`, rank is the the rank according to the score, from high to low.
-
-## PageRank Implementation
+### PageRank Implementation
 
 There is also my own implementation of the famous PageRank algorithm. To run, execute the following command
 

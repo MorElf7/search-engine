@@ -1,0 +1,21 @@
+swagger: 2.0,
+info: 
+  title: Shakespeares Search Engine API
+  version: 1.0.0
+paths: 
+  /search: 
+    get: 
+      summary: Return the matching documents
+      description: Search the database for the matching documents
+      produces: 
+        - application/json
+      parameters: 
+        - in: query
+          name: query
+          type: string
+          description: The phrases or word to search for
+      responses: 
+        200: 
+          description: Successful operation
+        400: 
+          description: Bad Request

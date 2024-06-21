@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Shakespeares Search Engine</title>
+  <link href="{{url_for('static', filename='styles.css')}}" rel="stylesheet">
+</head>
+
+<body>
+  <div class="flex my-2 font-bold text-4xl justify-center">
+    <h1>Shakespeares Search Engine</h1>
+  </div>
+
+  <div class="flex my-2 justify-center">
+    <label class="basis-1/2 mx-2 relative block">
+      <span class="sr-only">Search</span>
+      <span class="absolute inset-y-0 left-0 flex items-center pl-2">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+          class="size-6">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+        </svg>
+
+      </span>
+      <input id="query_input"
+        class="placeholder:italic placeholder:text-slate-400 block bg-white w-full border border-slate-300 rounded-md py-2 pl-9 pr-3 shadow-sm focus:outline-none focus:border-sky-500 focus:ring-sky-500 focus:ring-1 sm:text-sm"
+        placeholder="Search for anything..." type="text" name="search" />
+    </label>
+    <button id="query_submit" class="px-2 border rounded-md bg-sky-500 hover:bg-sky-700" type="button">Search</button>
+  </div>
+
+  <div class="flex my-2">
+    <div class="basis-1/5"></div>
+    <ul id="results-list" class="list-decimal">
+
+    </ul>
+
+  </div>
+
+
+  <script src="{{url_for('static', filename='index.js')}}"></script>
+
+</body>
+
+</html>
