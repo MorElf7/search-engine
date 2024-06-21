@@ -1,8 +1,11 @@
 # Shakespeare Search Engine
 
 Hello, this is my implementation of a search engine for Shakespeare plays. All components are built from scratch.
-It has both an API as well as a minimal webpage to demonstrate its capabilities
+It has both an API as well as a minimal webpage to demonstrate its capabilities.
 
+Checkout the webpage [here](http://18.222.201.31/)
+
+Checkout the api [here](http://18.222.201.31/swagger)
 ## How it works
 
 First, using the data from the file `shakespeare-data`, each is parsed and process to construct an Inverted List stored using SQLite. All calculations would be used along with this database.
@@ -29,7 +32,9 @@ algorithm to score and rank each document. In this cases, each scene of each pla
 
 ### PageRank Implementation
 
-There is also my own implementation of the famous PageRank algorithm. To run, execute the following command
+There is also my own implementation of the famous PageRank algorithm. Download these [files](https://github.com/MorElf7/search-engine/tree/master/pagerank) to try it out.
+
+To run, requires at least Python 3.7, execute the following command
 
 ```bash
 python pagerank.py [input] [lambda] [tau] [inlinks_output] [pagerank_output] [k]
