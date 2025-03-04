@@ -1,11 +1,35 @@
 # Shakespeare Search Engine
 
 Hello, this is my implementation of a search engine for Shakespeare plays. All components are built from scratch.
-It has both an API as well as a minimal webpage to demonstrate its capabilities.
+It has both an API as well as a minimal webpage to demonstrate its capabilities. Clone the repo to your machine to see its capabilities for yourself.
 
-Checkout the webpage [here](http://18.222.201.31/)
+## How to run
+First clone the repo
+```bash
+cd ~
+git clone https://github.com/MorElf7/search-engine.git
+cd search-engine
+```
 
-Checkout the api [here](http://18.222.201.31/swagger)
+Then ensure that you have Python 3.12.4. Install the neccessary packages 
+```bash
+pip install -r requirements.txt
+```
+
+Then download the database file from [here](https://drive.google.com/file/d/1kkE-_rxEDT0m8aXi4hZ8pW_ErFHlBsjo/view?usp=sharing). Put the database file to the root folder of the repo. 
+
+> [!NOTE]
+> You can choose not to download the database file, the application would auto generate one for you, but it could take a long time to create the full database.
+
+
+Then just start the server with 
+```bash
+python application.py
+```
+
+<!-- Checkout the webpage [here](http://18.222.201.31/) -->
+<!---->
+<!-- Checkout the api [here](http://18.222.201.31/swagger) -->
 ## How it works
 
 First, using the data from the file `shakespeare-data`, each is parsed and process to construct an Inverted List stored using SQLite. All calculations would be used along with this database.
